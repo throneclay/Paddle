@@ -18,12 +18,19 @@ limitations under the License. */
 #include "paddle/fluid/framework/op_registry.h"
 #include "paddle/fluid/operators/math/math_function.h"
 #include "paddle/fluid/operators/math/sequence_pooling.h"
+#include "sys/time.h"
 
 namespace paddle {
 namespace operators {
 
 using Tensor = framework::Tensor;
 using LoDTensor = framework::LoDTensor;
+
+double msecond1() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec*1000.0 + (double)tv.tv_usec / 1000.0;
+}
 
 template <typename DeviceContext, typename T>
 class SequencePoolKernel : public framework::OpKernel<T> {
@@ -52,9 +59,13 @@ class SequencePoolKernel : public framework::OpKernel<T> {
       index->Resize({dims});
       index->mutable_data<int>(context.GetPlace());
     }
+    double t1 = 0.0, t2 = 0.0;
     math::SequencePoolFunctor<DeviceContext, T> pool;
+    t1 = msecond1();
     pool(context.template device_context<DeviceContext>(), pooltype, *in, out,
          index);
+    t2 = msecond1();
+    printf("sequence pool time: %lf ms\n", t2 - t1);
   }
 };
 

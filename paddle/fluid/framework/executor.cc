@@ -22,6 +22,7 @@ limitations under the License. */
 #include "paddle/fluid/framework/reader.h"
 #include "paddle/fluid/platform/place.h"
 #include "paddle/fluid/platform/profiler.h"
+#include <sys/time.h>
 
 DECLARE_bool(benchmark);
 DEFINE_bool(check_nan_inf, false,
@@ -320,6 +321,12 @@ std::vector<std::shared_ptr<ExecutorPrepareContext>> Executor::Prepare(
   return result;
 }
 
+double fmsecond() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec*1000.0 + (double)tv.tv_usec / 1000.0;
+}
+
 void Executor::RunPreparedContext(ExecutorPrepareContext* ctx, Scope* scope,
                                   bool create_local_scope, bool create_vars) {
   Scope* local_scope = scope;
@@ -332,8 +339,15 @@ void Executor::RunPreparedContext(ExecutorPrepareContext* ctx, Scope* scope,
 
   for (auto& op : ctx->ops_) {
     VLOG(3) << place_ << " " << op->DebugStringEx(local_scope);
-    op->Run(*local_scope, place_);
 
+    double t1, t2;
+    t1 = fmsecond();
+    op->Run(*local_scope, place_);
+    t2 = fmsecond();
+    std::cout << " RunPreparedContext execute: " << op->Type()
+              << " elapse time: "<< t2 - t1 << "ms"
+              << std::endl;
+//      std::cout << " ins: " << ins["I"][0] << std::endl;
     if (FLAGS_benchmark) {
       VLOG(2) << "Memory used after operator " + op->Type() + " running: "
               << memory::memory_usage(place_);

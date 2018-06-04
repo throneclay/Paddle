@@ -35,11 +35,11 @@ find_package(Threads REQUIRED)
 include(simd)
 
 ################################ Configurations #######################################
-option(WITH_GPU         "Compile PaddlePaddle with NVIDIA GPU"          ${CUDA_FOUND})
+option(WITH_GPU         "Compile PaddlePaddle with NVIDIA GPU"          OFF)
 option(WITH_AMD_GPU     "Compile PaddlePaddle with AMD GPU"             OFF)
 option(WITH_AVX         "Compile PaddlePaddle with AVX intrinsics"      ${AVX_FOUND})
 option(WITH_MKL         "Compile PaddlePaddle with MKL support."        ${AVX_FOUND})
-option(WITH_DSO         "Compile PaddlePaddle with dynamic linked CUDA" ON)
+option(WITH_DSO         "Compile PaddlePaddle with dynamic linked CUDA" OFF)
 option(WITH_TESTING     "Compile PaddlePaddle with unit testing"        OFF)
 option(WITH_SWIG_PY     "Compile PaddlePaddle with inference api"       ON)
 option(WITH_STYLE_CHECK "Compile PaddlePaddle with style check"         ON)

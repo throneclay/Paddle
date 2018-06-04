@@ -17,6 +17,7 @@ limitations under the License. */
 #include "paddle/fluid/framework/eigen.h"
 #include "paddle/fluid/framework/op_registry.h"
 #include "paddle/fluid/operators/math/math_function.h"
+#include "sys/time.h"
 
 namespace paddle {
 namespace operators {
@@ -24,6 +25,12 @@ namespace operators {
 using framework::LoDTensor;
 using framework::LoD;
 using framework::Tensor;
+
+double msecond() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (double)tv.tv_sec*1000.0 + (double)tv.tv_usec / 1000.0;
+}
 
 template <typename DeviceContext, typename T>
 class CRFDecodingOpKernel : public framework::OpKernel<T> {
@@ -44,6 +51,8 @@ class CRFDecodingOpKernel : public framework::OpKernel<T> {
     int64_t* path = decoded_path->mutable_data<int64_t>(platform::CPUPlace());
     math::SetConstant<DeviceContext, int64_t>()(
         ctx.template device_context<DeviceContext>(), decoded_path, 0);
+    double t1 = 0.0, t2 = 0.0;
+    t1 = msecond();
     for (size_t i = 0; i < seq_num; ++i) {
       int start_pos = static_cast<int>(lod[level][i]);
       int end_pos = static_cast<int>(lod[level][i + 1]);
@@ -51,7 +60,9 @@ class CRFDecodingOpKernel : public framework::OpKernel<T> {
       Decode(emission_weights->Slice(start_pos, end_pos), *transition_weights,
              &decoded_path_one_seq);
     }
-
+    t2 = msecond();
+    printf("crf decoding time: %lf ms\n", t2 - t1);
+      printf("crf decoding labels %s!!!!\n", (label?"true":"false"));
     if (label) {
       PADDLE_ENFORCE_EQ(label->NumLevels(), 1UL,
                         "The Input(Label) should be a sequence.");
@@ -69,6 +80,7 @@ class CRFDecodingOpKernel : public framework::OpKernel<T> {
     auto emission_dims = emission_weights.dims();
     const size_t seq_len = emission_dims[0];
     const size_t tag_num = emission_dims[1];
+    printf(" seq_len = %ld, tag_num = %ld\n", seq_len, tag_num);
 
     const size_t state_trans_base_idx = 2;
 
